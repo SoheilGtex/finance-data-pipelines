@@ -1,0 +1,10 @@
+# Choose data source: coingecko | synthetic
+source: coingecko
+
+coingecko:
+  coin_id: bitcoin
+  vs_currency: usd
+  days: 30
+
+table:
+  name: prices
