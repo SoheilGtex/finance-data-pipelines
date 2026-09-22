@@ -1,85 +1,147 @@
-# Finance Data Pipelines — Pro (with Real Extractor)
+# Finance Data Pipelines
 
-A professional, interview-ready Python ETL template for **financial data** (stocks/indices/crypto).  
-Includes **real data extraction via CoinGecko** (no API key), CLI, config, tests, CI, and Docker.
+Finance Data Pipelines is a small, correctness-first time-series ETL and SQLite loading
+project. The current release provides a deterministic offline generator, strict validation,
+an independent logical-state oracle, and **Strategy A: atomic full replacement**.
 
-## Quickstart
+The repository is a baseline for a later controlled systems study. It does not yet contain
+Strategies B/C or performance results, and it is not presented as production-ready,
+high-performance, scalable, or research-grade software.
 
-### 1) Setup (Windows)
-```powershell
-py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-copy .env.sample .env
-python -m fdp.cli run-all
-```
+## Requirements
 
-### 1) Setup (macOS/Linux)
+- Python 3.11 or newer
+- SQLite supplied by Python
+- No API key or network data source
+
+## Installation
+
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
-cp .env.sample .env
-python -m fdp.cli run-all
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
+fdp --help
 ```
 
-### 2) Switch data source
-Edit `config.yaml`:
-```yaml
-source: coingecko   # options: coingecko | synthetic
-coingecko:
-  coin_id: bitcoin
-  vs_currency: usd
-  days: 30
+For development:
 
-table:
-  name: prices
-```
-- `coingecko` uses the public API (no key).  
-- `synthetic` generates demo data (offline; always works).
-
-### 3) Outputs
-- `data/raw/prices_raw.parquet`
-- `data/clean/prices_clean.parquet`
-- `warehouse.db` (SQLite) → table: `prices`
-
-## CLI Examples
 ```bash
-python -m fdp.cli extract --source coingecko --coin-id bitcoin --vs usd --days 30
-python -m fdp.cli extract --source synthetic --days 60
-python -m fdp.cli transform
-python -m fdp.cli load --table prices
-python -m fdp.cli run-all
+python -m pip install -e '.[dev]'
 ```
 
-## Project Layout
+`pyproject.toml` is the authoritative dependency definition. `requirements*.txt` are
+compatibility wrappers only.
+
+## Deterministic offline quickstart
+
+Choose the output directory explicitly. All generated Parquet, JSON, SQLite, WAL, and SHM
+files remain under that directory unless `--db-path` explicitly selects another location.
+
+```bash
+fdp run-all \
+  --source synthetic \
+  --seed 20270916 \
+  --rows 1000 \
+  --output-dir /tmp/fdp-run
 ```
+
+The command performs two identical atomic full replacements so exact-rerun idempotency is
+verified. It prints correctness fields as JSON and writes:
+
+```text
+/tmp/fdp-run/
+  raw/prices_raw.parquet
+  normalized/prices_normalized.parquet
+  dataset_manifest.json
+  correctness.json
+  warehouse.db
+```
+
+No throughput, latency, or comparative benchmark conclusion is produced.
+
+## Optional configuration file
+
+CLI values override a YAML file. Only `source`, `seed`, and `rows` are accepted:
+
+```bash
+fdp run-all --config config.yaml --output-dir /tmp/fdp-run
+```
+
+The package never searches the source checkout for configuration. It does not use `.env`, so
+no `.env.example` is required.
+
+## Logical model
+
+The logical key is `(series_id, event_ts_utc)` and exact event identity is
+`(series_id, event_ts_utc, revision)`. Timestamps are UTC Unix seconds aligned to one minute.
+Prices and optional volume use fixed-point integers with scale `10^-6`.
+
+Duplicate/update rules:
+
+- an exact duplicate event is a safe no-op;
+- different payloads for the same key and revision reject the entire snapshot;
+- the highest revision is current;
+- a lower revision cannot regress the current state;
+- an empty replacement is rejected by default.
+
+The SQLite current-state table has a composite primary key, required checks, and an
+`event_ts_utc` index. Loads use WAL, `synchronous=FULL`, foreign keys, a 5-second busy timeout,
+and one explicit transaction. The staging table is validated against the independent oracle
+before publication. A pre-commit failure rolls back to the prior committed table.
+
+## Tests and local CI-equivalent checks
+
+```bash
+ruff check .
+ruff format --check .
+pytest -q
+
+tmp_dir="$(mktemp -d)"
+fdp run-all --source synthetic --seed 20270916 --rows 1000 \
+  --output-dir "$tmp_dir/output"
+```
+
+Tests use temporary directories and make no live network calls.
+
+## Docker
+
+The image installs the package, runs as a non-root user, and defaults to the deterministic
+offline 1,000-row flow:
+
+```bash
+docker build -t finance-data-pipelines:phase3d .
+docker run --rm -v "$PWD/docker-output:/work/output" \
+  finance-data-pipelines:phase3d
+```
+
+Docker support is part of the baseline, but a particular release should be called verified
+only when build and run commands have actually executed in that release environment.
+
+## Current maturity and limitations
+
+- Strategy A only; Strategies B/C belong to the next phase.
+- Single-process, single-writer SQLite baseline.
+- Synthetic correctness fixture only; no market-behavior claims.
+- No concurrency or distributed-system evaluation.
+- No performance measurements or rankings.
+- Deterministic exception injection tests transaction rollback; they are not a claim that
+  every OS/power-loss mode has been tested.
+
+## Project layout
+
+```text
 src/fdp/
-  cli.py          # click-based CLI (with flags)
-  config.py       # Pydantic settings + YAML config
-  extract.py      # real extractor (CoinGecko) + synthetic fallback
-  transform.py    # cleaning + returns
-  load.py         # SQLAlchemy load into SQLite
-  utils/
-    io.py
-    logging.py
-tests/
-  test_flow.py
-  test_extract_synthetic.py
-  test_extract_coingecko_stub.py
-.github/workflows/python-ci.yml
-.pre-commit-config.yaml
-pyproject.toml
-requirements.txt
-requirements-dev.txt
-Makefile
-Dockerfile
-.env.sample
-config.yaml
-LICENSE
-README.md
-docs/DATA_SOURCES.md
+  cli.py          installed Click interface
+  pipeline.py     ordinary Python orchestration
+  extract.py      deterministic synthetic generator
+  transform.py    strict normalization
+  validation.py   loader-side validation and revision resolution
+  oracle.py       independent current-state oracle
+  load.py         atomic SQLite full replacement
+  encoding.py     canonical binary checksum encoding
+  manifest.py     deterministic JSON manifests
+  parquet_io.py   frozen Parquet schema
+tests/            isolated correctness and CLI tests
+.github/workflows/ci.yml
 ```
-
-> Tip: Replace the CoinGecko extractor with your preferred exchange/stock API if needed,  
-and keep credentials in `.env` (never commit secrets).

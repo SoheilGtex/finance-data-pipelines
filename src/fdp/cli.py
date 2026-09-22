@@ -1,66 +1,106 @@
+"""Installed command-line interface for the offline correctness baseline."""
+
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import Any
+
 import click
-from rich.console import Console
 
-from .config import load_yaml_config, Settings, ROOT
-from .utils.io import ensure_dirs
-from .utils.logging import setup_logging
-from .extract import fetch_synthetic, fetch_coingecko_prices, save_raw
-from .transform import transform_prices
-from .load import load_to_sql
+from . import __version__
+from .config import ConfigurationError, load_yaml_config
+from .load import AtomicReplaceError
+from .oracle import OracleError
+from .pipeline import run_synthetic_baseline
+from .validation import ValidationError
 
-console = Console()
+
+def _integer_setting(
+    name: str, cli_value: int | None, config: dict[str, Any], default: int, *, minimum: int
+) -> int:
+    value = cli_value if cli_value is not None else config.get(name, default)
+    if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
+        raise ConfigurationError(f"{name} must be an integer >= {minimum}")
+    return value
+
 
 @click.group()
-def cli():
-    "Finance Data Pipelines CLI"
-    pass
+@click.version_option(version=__version__)
+def cli() -> None:
+    """Finance Data Pipelines correctness-first CLI."""
 
-@cli.command(help="Run extract step")
-@click.option("--source", type=click.Choice(["coingecko", "synthetic"]), default=None)
-@click.option("--coin-id", type=str, default=None, help="CoinGecko coin id (e.g., bitcoin)")
-@click.option("--vs", type=str, default=None, help="vs_currency (e.g., usd, eur)")
-@click.option("--days", type=int, default=None, help="number of days to fetch/generate")
-def extract(source: str | None, coin_id: str | None, vs: str | None, days: int | None):
-    log = setup_logging()
-    ensure_dirs()
-    cfg = load_yaml_config(ROOT / "config.yaml")
-    src = source or cfg.get("source", "coingecko")
-    if src == "coingecko":
-        c = cfg.get("coingecko", {})
-        coin = coin_id or c.get("coin_id", "bitcoin")
-        cur = vs or c.get("vs_currency", "usd")
-        d = int(days or c.get("days", 30))
-        console.print(f"[bold]CoinGecko[/]: coin_id={coin}, vs={cur}, days={d}")
-        df = fetch_coingecko_prices(coin_id=coin, vs_currency=cur, days=d)
-    else:
-        d = int(days or cfg.get("coingecko", {}).get("days", 30))
-        console.print(f"[bold]Synthetic[/]: days={d}")
-        df = fetch_synthetic(days=d)
 
-    out = save_raw(df)
-    console.print(f"[bold green]Extract OK[/] → {out}")
+@cli.command("run-all")
+@click.option(
+    "--source",
+    type=click.Choice(["synthetic"], case_sensitive=False),
+    default=None,
+    help="Offline source. Phase 3D supports synthetic only.",
+)
+@click.option("--seed", type=int, default=None, help="Nonnegative deterministic seed.")
+@click.option("--rows", type=int, default=None, help="Exact number of rows to generate.")
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    required=True,
+    help="Directory that will contain every generated artifact.",
+)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path, dir_okay=False),
+    default=None,
+    help="Optional SQLite path; defaults to OUTPUT_DIR/warehouse.db.",
+)
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(path_type=Path, dir_okay=False, exists=True),
+    default=None,
+    help="Optional YAML file with source, seed, and rows.",
+)
+def run_all(
+    source: str | None,
+    seed: int | None,
+    rows: int | None,
+    output_dir: Path,
+    db_path: Path | None,
+    config_path: Path | None,
+) -> None:
+    """Generate, normalize, atomically load, and verify an offline snapshot."""
 
-@cli.command(help="Run transform step")
-def transform():
-    ensure_dirs()
-    out = transform_prices()
-    console.print(f"[bold green]Transform OK[/] → {out}")
+    try:
+        config = load_yaml_config(config_path)
+        resolved_source = (source or config.get("source", "synthetic")).lower()
+        if resolved_source != "synthetic":
+            raise ConfigurationError("source must be 'synthetic' in Phase 3D")
+        resolved_seed = _integer_setting("seed", seed, config, 20270916, minimum=0)
+        resolved_rows = _integer_setting("rows", rows, config, 1000, minimum=1)
+        result = run_synthetic_baseline(
+            seed=resolved_seed,
+            rows=resolved_rows,
+            output_dir=output_dir,
+            database_path=db_path,
+        )
+    except (
+        AtomicReplaceError,
+        ConfigurationError,
+        ValidationError,
+        OracleError,
+        OSError,
+        ValueError,
+    ) as exc:
+        raise click.ClickException(str(exc)) from exc
 
-@cli.command(help="Run load step")
-@click.option("--table", type=str, default=None, help="Override table name (else from config.yaml)")
-def load(table: str | None):
-    cfg = load_yaml_config(ROOT / "config.yaml")
-    tbl = table or cfg.get("table", {}).get("name", "prices")
-    url, tbl = load_to_sql(table=tbl)
-    console.print(f"[bold green]Load OK[/] → {url}.{tbl}")
+    output = {
+        "output_dir": str(result.artifacts.output_dir),
+        "database": str(result.artifacts.database),
+        "manifest": str(result.artifacts.manifest),
+        "correctness": str(result.artifacts.correctness),
+        **result.correctness,
+    }
+    click.echo(json.dumps(output, indent=2, sort_keys=True))
 
-@cli.command(help="Run all steps: extract → transform → load")
-def run_all():
-    extract.main(standalone_mode=False)  # type: ignore
-    transform.main(standalone_mode=False)  # type: ignore
-    load.main(standalone_mode=False)  # type: ignore
 
 if __name__ == "__main__":
     cli()
