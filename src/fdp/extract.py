@@ -1,66 +1,47 @@
+"""Deterministic offline synthetic event generation."""
+
 from __future__ import annotations
 
-import time
-from pathlib import Path
-from typing import Optional
+import random
 
-import pandas as pd
-import requests
+from .model import TIMESTAMP_GRANULARITY_SECONDS, PriceEvent
 
-from .config import RAW_DIR
+GENERATOR_VERSION = "1.0.0"
+DEFAULT_START_TS_UTC = 1_704_067_200  # 2024-01-01T00:00:00Z
 
-COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
-def _request_json(url: str, params: dict, retries: int = 3, backoff: float = 1.2) -> dict:
-    # Simple GET with retries to handle transient errors/rate-limits.
-    last_exc: Optional[Exception] = None
-    for i in range(retries):
-        try:
-            resp = requests.get(url, params=params, timeout=20)
-            if resp.status_code == 200:
-                return resp.json()
-            # Backoff on non-200 (e.g., 429/5xx)
-            time.sleep(backoff * (i + 1))
-        except Exception as e:
-            last_exc = e
-            time.sleep(backoff * (i + 1))
-    if last_exc:
-        raise last_exc
-    raise RuntimeError(f"Failed to fetch {url} after {retries} retries.")
+def generate_synthetic(
+    *, rows: int, seed: int, start_ts_utc: int = DEFAULT_START_TS_UTC
+) -> tuple[PriceEvent, ...]:
+    """Generate an exact-size deterministic workload using Python's stable PRNG API."""
 
-def fetch_coingecko_prices(coin_id: str, vs_currency: str = "usd", days: int = 30) -> pd.DataFrame:
-    """
-    Fetch OHLC-like prices from CoinGecko market_chart (prices only).
-    Returns a DataFrame with columns: date, open, close
-    (approximate open/close derived from available 'prices' series).
-    """
-    url = f"{COINGECKO_BASE}/coins/{coin_id}/market_chart"
-    js = _request_json(url, {"vs_currency": vs_currency, "days": days})
-    prices = js.get("prices", [])
-    if not prices:
-        raise ValueError("Empty prices from CoinGecko.")
-    # prices: [[timestamp_ms, price], ...]
-    df = pd.DataFrame(prices, columns=["ts", "price"])
-    df["date"] = pd.to_datetime(df["ts"], unit="ms").dt.date
-    # aggregate to daily open/close
-    grp = df.groupby("date")["price"]
-    daily = pd.DataFrame({
-        "open": grp.first(),
-        "close": grp.last()
-    }).reset_index()
-    return daily
+    if not isinstance(rows, int) or isinstance(rows, bool) or rows < 1:
+        raise ValueError("rows must be an integer >= 1")
+    if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+        raise ValueError("seed must be a nonnegative integer")
+    if start_ts_utc < 0:
+        raise ValueError("start_ts_utc must be nonnegative")
+    if start_ts_utc % TIMESTAMP_GRANULARITY_SECONDS != 0:
+        raise ValueError("start_ts_utc must align to the timestamp granularity")
 
-def fetch_synthetic(days: int = 30) -> pd.DataFrame:
-    idx = pd.date_range("2024-01-01", periods=days, freq="D")
-    df = pd.DataFrame({
-        "date": idx.date,
-        "open": 100 + (pd.Series(range(days)) * 0.5),
-        "close": 100 + (pd.Series(range(days)) * 0.5).shift(1).fillna(100)
-    })
-    return df
-
-def save_raw(df: pd.DataFrame, name: str = "prices_raw.parquet") -> Path:
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
-    out = RAW_DIR / name
-    df.to_parquet(out, index=False)
-    return out
+    rng = random.Random(seed)
+    series_count = min(64, rows)
+    events: list[PriceEvent] = []
+    for index in range(rows):
+        series_number = index % series_count
+        time_bucket = index // series_count
+        baseline = 100_000_000 + series_number * 100_000 + time_bucket * 1_000
+        open_micros = baseline + rng.randint(-25_000, 25_000)
+        close_micros = open_micros + rng.randint(-20_000, 20_000)
+        events.append(
+            PriceEvent(
+                series_id=f"SYNTH_{series_number:04d}",
+                event_ts_utc=start_ts_utc + time_bucket * TIMESTAMP_GRANULARITY_SECONDS,
+                revision=1,
+                open_micros=open_micros,
+                close_micros=max(1, close_micros),
+                volume_micros=rng.randint(0, 10_000_000_000),
+                source="synthetic",
+            )
+        )
+    return tuple(events)

@@ -1,20 +1,21 @@
+.PHONY: install dev lint format-check test smoke ci
+
 install:
-	python -m pip install --upgrade pip
-	pip install -r requirements.txt
+	python -m pip install .
 
-dev: install
-	pip install -r requirements-dev.txt
-	pre-commit install
-
-format:
-	black .
-	isort .
+dev:
+	python -m pip install -e '.[dev]'
 
 lint:
-	flake8 .
+	ruff check .
+
+format-check:
+	ruff format --check .
 
 test:
 	pytest -q
 
-run:
-	python -m fdp.cli run-all
+smoke:
+	fdp run-all --source synthetic --seed 20270916 --rows 1000 --output-dir .repro/smoke
+
+ci: lint format-check test

@@ -1,6 +1,2 @@
-pytest
-pytest-cov
-black
-isort
-flake8
-pre-commit
+# Compatibility wrapper. pyproject.toml is the authoritative dependency source.
+-e .[dev]

@@ -1,20 +1,48 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
+[project]
+name = "finance-data-pipelines"
+version = "0.2.0"
+description = "A deterministic time-series loading baseline for correctness-first systems evaluation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Soheil Salmani"}]
+dependencies = [
+    "click>=8.1,<9",
+    "pyarrow>=16,<26",
+    "PyYAML>=6,<7",
+]
 
-[tool.isort]
-profile = "black"
-line_length = 100
-multi_line_output = 3
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=5,<8",
+    "ruff>=0.8,<1",
+]
+bench = [
+    "psutil>=5.9,<8",
+]
 
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203"]
+[project.scripts]
+fdp = "fdp.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

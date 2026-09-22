@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  correctness:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: python -m pip install '.[dev]'
+      - name: Lint
+        run: ruff check .
+      - name: Format check
+        run: ruff format --check .
+      - name: Tests
+        run: pytest -q
+      - name: Installed import and CLI
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -c "import fdp"
+          fdp --help
+          fdp run-all --help
+      - name: Deterministic offline 1k smoke
+        working-directory: ${{ runner.temp }}
+        run: |
+          fdp run-all --source synthetic --seed 20270916 --rows 1000 --output-dir "$RUNNER_TEMP/fdp-smoke"
+          python -c "import json, os; p=os.path.join(os.environ['RUNNER_TEMP'], 'fdp-smoke', 'correctness.json'); d=json.load(open(p)); assert d['checksum_equal'] is True; assert d['database_final_row_count'] == 1000; assert d['integrity_check'] == 'ok'"
