@@ -1,4 +1,4 @@
-.PHONY: install dev lint format-check test smoke ci
+.PHONY: install dev lint format-check test smoke benchmark-small ci
 
 install:
 	python -m pip install .
@@ -17,5 +17,8 @@ test:
 
 smoke:
 	fdp run-all --source synthetic --seed 20270916 --rows 1000 --output-dir .repro/smoke
+
+benchmark-small:
+	python scripts/benchmark.py --output-dir .repro/benchmark-small --scales 1000 --repetitions 1
 
 ci: lint format-check test

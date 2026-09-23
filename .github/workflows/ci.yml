@@ -38,3 +38,13 @@ jobs:
         run: |
           fdp run-all --source synthetic --seed 20270916 --rows 1000 --output-dir "$RUNNER_TEMP/fdp-smoke"
           python -c "import json, os; p=os.path.join(os.environ['RUNNER_TEMP'], 'fdp-smoke', 'correctness.json'); d=json.load(open(p)); assert d['checksum_equal'] is True; assert d['database_final_row_count'] == 1000; assert d['integrity_check'] == 'ok'"
+      - name: Stateful three-strategy correctness smoke
+        run: |
+          python scripts/benchmark.py --output-dir "$RUNNER_TEMP/fdp-benchmark" --scales 1000 --repetitions 1
+          test "$(wc -l < "$RUNNER_TEMP/fdp-benchmark/correctness.csv")" -gt 1
+          test "$(wc -l < "$RUNNER_TEMP/fdp-benchmark/query_samples.jsonl")" -eq 2250
+      - name: Regenerate analysis from raw files
+        run: |
+          python scripts/analyze_benchmark.py "$RUNNER_TEMP/fdp-benchmark" "$RUNNER_TEMP/fdp-analysis"
+          test -s "$RUNNER_TEMP/fdp-analysis/summary.csv"
+          test -s "$RUNNER_TEMP/fdp-analysis/query_summary.csv"
