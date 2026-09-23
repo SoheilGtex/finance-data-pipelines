@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650">
+<rect width="100%" height="100%" fill="white"/>
+<text x="600.0" y="40" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">Median storage footprint (bytes)</text>
+<line x1="110" y1="1015.0" x2="1040" y2="1015.0" stroke="#ddd"/>
+<text x="102" y="1019.0" text-anchor="end" font-family="sans-serif" font-size="12">0</text>
+<line x1="110" y1="829.0" x2="1040" y2="829.0" stroke="#ddd"/>
+<text x="102" y="833.0" text-anchor="end" font-family="sans-serif" font-size="12">6962913</text>
+<line x1="110" y1="643.0" x2="1040" y2="643.0" stroke="#ddd"/>
+<text x="102" y="647.0" text-anchor="end" font-family="sans-serif" font-size="12">13925827</text>
+<line x1="110" y1="457.0" x2="1040" y2="457.0" stroke="#ddd"/>
+<text x="102" y="461.0" text-anchor="end" font-family="sans-serif" font-size="12">20888740</text>
+<line x1="110" y1="271.0" x2="1040" y2="271.0" stroke="#ddd"/>
+<text x="102" y="275.0" text-anchor="end" font-family="sans-serif" font-size="12">27851653</text>
+<line x1="110" y1="85.0" x2="1040" y2="85.0" stroke="#ddd"/>
+<text x="102" y="89.0" text-anchor="end" font-family="sans-serif" font-size="12">34814566</text>
+<text x="187.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">conflicting_same_revision</text>
+<rect x="129.375" y="206.30434782608688" width="30.225" height="808.6956521739131" fill="#4c78a8"><title>conflicting_same_revision A_atomic_full_replace: 30273536.0</title></rect>
+<rect x="168.125" y="441.43991223168007" width="30.225" height="573.5600877683199" fill="#f58518"><title>conflicting_same_revision B_incremental_upsert: 21471232.0</title></rect>
+<rect x="206.875" y="384.76228432935466" width="30.225" height="630.2377156706453" fill="#54a24b"><title>conflicting_same_revision C_append_history_materialized: 23592960.0</title></rect>
+<text x="342.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">duplicate_heavy_25pct</text>
+<rect x="284.375" y="315.72061790779617" width="30.225" height="699.2793820922038" fill="#4c78a8"><title>duplicate_heavy_25pct A_atomic_full_replace: 26177536.0</title></rect>
+<rect x="323.125" y="556.2175795473931" width="30.225" height="458.78242045260686" fill="#f58518"><title>duplicate_heavy_25pct B_incremental_upsert: 17174528.0</title></rect>
+<rect x="361.875" y="519.0160477196121" width="30.225" height="495.983952280388" fill="#54a24b"><title>duplicate_heavy_25pct C_append_history_materialized: 18567168.0</title></rect>
+<text x="497.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">exact_rerun</text>
+<rect x="439.375" y="315.72061790779617" width="30.225" height="699.2793820922038" fill="#4c78a8"><title>exact_rerun A_atomic_full_replace: 26177536.0</title></rect>
+<rect x="478.125" y="556.2175795473931" width="30.225" height="458.78242045260686" fill="#f58518"><title>exact_rerun B_incremental_upsert: 17174528.0</title></rect>
+<rect x="516.875" y="519.0160477196121" width="30.225" height="495.983952280388" fill="#54a24b"><title>exact_rerun C_append_history_materialized: 18567168.0</title></rect>
+<text x="652.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">initial_load</text>
+<rect x="594.375" y="559.1718188395993" width="30.225" height="455.82818116040073" fill="#4c78a8"><title>initial_load A_atomic_full_replace: 17063936.0</title></rect>
+<rect x="633.125" y="556.2175795473931" width="30.225" height="458.78242045260686" fill="#f58518"><title>initial_load B_incremental_upsert: 17174528.0</title></rect>
+<rect x="671.875" y="519.0160477196121" width="30.225" height="495.983952280388" fill="#54a24b"><title>initial_load C_append_history_materialized: 18567168.0</title></rect>
+<text x="807.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">mixed_updates_50pct</text>
+<rect x="749.375" y="314.62645520697913" width="30.225" height="700.3735447930209" fill="#4c78a8"><title>mixed_updates_50pct A_atomic_full_replace: 26218496.0</title></rect>
+<rect x="788.125" y="441.43991223168007" width="30.225" height="573.5600877683199" fill="#f58518"><title>mixed_updates_50pct B_incremental_upsert: 21471232.0</title></rect>
+<rect x="826.875" y="384.76228432935466" width="30.225" height="630.2377156706453" fill="#54a24b"><title>mixed_updates_50pct C_append_history_materialized: 23592960.0</title></rect>
+<text x="962.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">stale_revisions</text>
+<rect x="904.375" y="206.30434782608688" width="30.225" height="808.6956521739131" fill="#4c78a8"><title>stale_revisions A_atomic_full_replace: 30273536.0</title></rect>
+<rect x="943.125" y="441.43991223168007" width="30.225" height="573.5600877683199" fill="#f58518"><title>stale_revisions B_incremental_upsert: 21471232.0</title></rect>
+<rect x="981.875" y="384.76228432935466" width="30.225" height="630.2377156706453" fill="#54a24b"><title>stale_revisions C_append_history_materialized: 23592960.0</title></rect>
+<rect x="680" y="595" width="14" height="14" fill="#4c78a8"/>
+<text x="700" y="607" font-family="sans-serif" font-size="11">A_atomic_full_</text>
+<rect x="800" y="595" width="14" height="14" fill="#f58518"/>
+<text x="820" y="607" font-family="sans-serif" font-size="11">B_incremental_</text>
+<rect x="920" y="595" width="14" height="14" fill="#54a24b"/>
+<text x="940" y="607" font-family="sans-serif" font-size="11">C_append_histo</text>
+</svg>

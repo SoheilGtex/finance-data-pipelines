@@ -1,19 +1,78 @@
 # Finance Data Pipelines
 
-Finance Data Pipelines is a small, correctness-first time-series ETL and SQLite loading
-project. The current release provides a deterministic offline generator, strict validation,
-an independent logical-state oracle, and three comparable SQLite strategies: **A: atomic
-full replacement**, **B: incremental upsert**, and **C: append-only history with a current
-projection**.
+[![CI](https://github.com/SoheilGtex/finance-data-pipelines/actions/workflows/ci.yml/badge.svg)](https://github.com/SoheilGtex/finance-data-pipelines/actions/workflows/ci.yml)
 
-The repository includes a reproducible benchmark harness. Its results are cohort-specific and
-are not a claim of production readiness, universal performance, scalability, or research novelty.
+A correctness-first, reproducible time-series ETL and SQLite benchmark for comparing three loading strategies under stateful updates, duplicates, conflicts, stale revisions, and interruption recovery.
+
+## Why this project exists
+
+The project studies a practical systems question:
+
+> How do different SQLite loading strategies behave when they must preserve the same logical state under reruns, updates, duplicates, stale revisions, conflicts, and failures?
+
+The benchmark compares:
+
+- **Strategy A — Atomic full replacement**
+- **Strategy B — Transactional incremental upsert**
+- **Strategy C — Append-only history with a materialized current-state projection**
+
+All three strategies are validated against the same independent logical-state oracle before performance results are summarized.
+
+## Highlights
+
+- Deterministic synthetic time-series generator
+- Strict normalization and revision semantics
+- Independent logical-state oracle with stable SHA-256 checksums
+- Stateful workload execution
+- Cross-batch same-revision conflict rejection
+- Stale-revision protection
+- Process-interruption and transactional recovery tests
+- Five fixed query workloads with warm-up and timed samples
+- Reproducible 100k and 1m benchmark cohorts
+- GitHub Actions validation on Python 3.11 and 3.12
+
+## Benchmark results
+
+Median initial-load wall time from the corrected Phase 3E analysis:
+
+| Cohort | Strategy A | Strategy B | Strategy C |
+|---|---:|---:|---:|
+| 100k rows | 3,429.25 ms | 1,733.58 ms | 1,868.53 ms |
+| 1m rows | 39,050.38 ms | 21,173.67 ms | 22,539.42 ms |
+
+For the recorded environment and workloads:
+
+- At **100k rows**, Strategy B had **49.4% lower** median initial-load wall time than Strategy A.
+- At **1m rows**, Strategy B had **45.8% lower** median initial-load wall time than Strategy A.
+- At **1m rows**, Strategy A took about **1.84×** as long as Strategy B.
+
+These are cohort-specific observations, not universal performance claims.
+
+### 100k cohort
+
+![100k ingestion wall time](docs/phase3e/charts/100k/ingestion_wall_time.svg)
+
+![100k query latency](docs/phase3e/charts/100k/query_latency.svg)
+
+![100k storage footprint](docs/phase3e/charts/100k/storage_footprint.svg)
+
+### 1m cohort
+
+![1m ingestion wall time](docs/phase3e/charts/1m/ingestion_wall_time.svg)
+
+![1m query latency](docs/phase3e/charts/1m/query_latency.svg)
+
+![1m storage footprint](docs/phase3e/charts/1m/storage_footprint.svg)
+
+See the corrected execution report:
+
+[`docs/phase3e/phase3e-final-execution-report-corrected.md`](docs/phase3e/phase3e-final-execution-report-corrected.md)
 
 ## Requirements
 
 - Python 3.11 or newer
 - SQLite supplied by Python
-- No API key or network data source
+- No API key or network data source required
 
 ## Installation
 
@@ -31,13 +90,11 @@ For development:
 python -m pip install -e '.[dev]'
 ```
 
-`pyproject.toml` is the authoritative dependency definition. `requirements*.txt` are
-compatibility wrappers only.
+`pyproject.toml` is the authoritative dependency definition. `requirements*.txt` are compatibility wrappers only.
 
 ## Deterministic offline quickstart
 
-Choose the output directory explicitly. All generated Parquet, JSON, SQLite, WAL, and SHM
-files remain under that directory unless `--db-path` explicitly selects another location.
+Choose the output directory explicitly:
 
 ```bash
 fdp run-all \
@@ -47,8 +104,9 @@ fdp run-all \
   --output-dir /tmp/fdp-run
 ```
 
-The command performs two identical atomic full replacements so exact-rerun idempotency is
-verified. It prints correctness fields as JSON and writes:
+The command performs two identical atomic full replacements so exact-rerun idempotency is verified.
+
+It writes:
 
 ```text
 /tmp/fdp-run/
@@ -59,112 +117,186 @@ verified. It prints correctness fields as JSON and writes:
   warehouse.db
 ```
 
-The quickstart produces correctness evidence only. Comparative results are generated separately
-by the controlled experiment harness described below.
+The quickstart produces correctness evidence only. Comparative benchmark results are generated separately.
 
 ## Controlled experiment
 
-The benchmark harness is `scripts/benchmark.py`. It freezes SQLite WAL and
-`synchronous=FULL`, runs stateful workload sequences from one fresh database per strategy and
-repetition, rotates strategy order, validates every transition against the independent oracle,
-and writes `environment.json`, `dataset_manifest.json`, `runs.jsonl`, `query_samples.jsonl`,
-`summary.csv`, `correctness.csv`, and `recovery.csv`. Each accepted condition uses five fixed
-queries with two warm-ups and 30 timed warm-cache samples. Analysis is regenerated from raw files
-with `scripts/analyze_benchmark.py`. A small offline smoke is reproducible with:
+The benchmark harness is:
+
+```text
+scripts/benchmark.py
+```
+
+It:
+
+- freezes SQLite WAL and `synchronous=FULL`
+- uses one fresh database per strategy and repetition
+- rotates strategy order
+- validates every accepted state against the independent oracle
+- records environment and dataset metadata
+- records state transitions and recovery evidence
+- benchmarks five fixed query workloads
+- regenerates analysis from raw files only
+
+A small offline smoke run is available with:
 
 ```bash
 make benchmark-small
 ```
 
-The full experiment is intentionally separate from ordinary CI. It uses synthetic data only;
-no financial or market conclusion is supported. Any report must identify the exact machine,
-source hash, workload definitions, and limitations of its cohort.
-
-## Optional configuration file
-
-CLI values override a YAML file. Only `source`, `seed`, and `rows` are accepted:
+Analysis is regenerated with:
 
 ```bash
-fdp run-all --config config.yaml --output-dir /tmp/fdp-run
+python scripts/analyze_benchmark.py <raw_dir> <output_dir>
 ```
 
-The package never searches the source checkout for configuration. It does not use `.env`, so
-no `.env.example` is required.
+The full benchmark is intentionally separate from ordinary CI.
 
-## Logical model
+## Stateful semantics
 
-The logical key is `(series_id, event_ts_utc)` and exact event identity is
-`(series_id, event_ts_utc, revision)`. Timestamps are UTC Unix seconds aligned to one minute.
-Prices and optional volume use fixed-point integers with scale `10^-6`.
+The logical key is:
 
-Duplicate/update rules:
+```text
+(series_id, event_ts_utc)
+```
 
-- an exact duplicate event is a safe no-op;
-- different payloads for the same key and revision reject the entire batch, including across
-  previously committed batches;
-- the highest revision is current;
-- a lower revision cannot regress the current state;
-- an empty replacement is rejected by default.
+Exact event identity is:
 
-The SQLite current-state table has a composite primary key, required checks, and an
-`event_ts_utc` index. Loads use WAL, `synchronous=FULL`, foreign keys, a 5-second busy timeout,
-and one explicit transaction. The staging table is validated against the independent oracle
-before publication. A pre-commit failure rolls back to the prior committed table.
+```text
+(series_id, event_ts_utc, revision)
+```
 
-## Tests and local CI-equivalent checks
+Rules:
+
+- exact duplicate events are safe no-ops
+- same-revision payload conflicts reject the entire batch
+- higher revisions update current state
+- lower revisions cannot regress current state
+- empty replacement is rejected by default
+
+Timestamps are UTC Unix seconds aligned to one minute. Prices and optional volume use fixed-point integers with scale `10^-6`.
+
+## Query suite
+
+Each accepted measured state uses:
+
+- **Q1** — point lookup
+- **Q2** — range lookup
+- **Q3** — period aggregate
+- **Q4** — latest-state lookup
+- **Q5** — filtered-return query
+
+Each query uses two warm-ups and 30 timed warm-cache samples.
+
+Result signatures are checked for equality across strategies before timing summaries are used.
+
+## Correctness and recovery
+
+The benchmark verifies:
+
+- independent-oracle equivalence
+- stable canonical checksums
+- duplicate idempotency
+- cross-batch conflict rejection
+- stale-revision protection
+- rollback on injected failure
+- process interruption before commit
+- database integrity after recovery
+- deterministic rerun to the expected state
+
+Process interruption testing is not presented as exhaustive OS- or power-loss testing.
+
+## Tests and CI
+
+Local checks:
 
 ```bash
 ruff check .
 ruff format --check .
 pytest -q
-
-tmp_dir="$(mktemp -d)"
-fdp run-all --source synthetic --seed 20270916 --rows 1000 \
-  --output-dir "$tmp_dir/output"
 ```
 
-Tests use temporary directories and make no live network calls.
+The GitHub Actions workflow runs correctness checks on:
+
+- Python 3.11
+- Python 3.12
 
 ## Docker
 
-The image installs the package, runs as a non-root user, and defaults to the deterministic
-offline 1,000-row flow:
+The image installs the package, runs as a non-root user, and defaults to the deterministic offline 1,000-row flow:
 
 ```bash
-docker build -t finance-data-pipelines:phase3d .
+docker build -t finance-data-pipelines:phase3e .
 docker run --rm -v "$PWD/docker-output:/work/output" \
-  finance-data-pipelines:phase3d
+  finance-data-pipelines:phase3e
 ```
 
-Docker support is part of the baseline, but a particular release should be called verified
-only when build and run commands have actually executed in that release environment.
-
-## Current maturity and limitations
-
-- Three strategies with shared logical semantics; physical storage trade-offs differ.
-- Single-process, single-writer SQLite baseline.
-- Synthetic correctness fixture only; no market-behavior claims.
-- No concurrency or distributed-system evaluation.
-- Benchmark results are machine-specific and do not establish universal rankings.
-- Deterministic exception injection and process-interruption tests cover transactional recovery;
-  they are not a claim that every OS/power-loss mode has been tested.
+Docker support is part of the repository, but a release should only be called Docker-verified when those commands have actually been executed in that release environment.
 
 ## Project layout
 
 ```text
 src/fdp/
   cli.py          installed Click interface
-  pipeline.py     ordinary Python orchestration
+  pipeline.py     orchestration
   extract.py      deterministic synthetic generator
   transform.py    strict normalization
-  validation.py   loader-side validation and revision resolution
+  validation.py   validation and revision resolution
   oracle.py       independent current-state oracle
   load.py         atomic SQLite full replacement
-  encoding.py     canonical binary checksum encoding
+  encoding.py     canonical checksum encoding
   manifest.py     deterministic JSON manifests
   parquet_io.py   frozen Parquet schema
-  strategies.py   alternative SQLite implementations with shared logical semantics
-scripts/          benchmark.py and analyze_benchmark.py
-tests/            isolated correctness and CLI tests
+  strategies.py   benchmark loading strategies
+
+scripts/
+  benchmark.py
+  analyze_benchmark.py
+
+tests/
+  correctness, CLI, strategy, and interruption tests
+
+docs/phase3e/
+  corrected execution report
+  benchmark charts
+
 .github/workflows/ci.yml
 ```
+
+## Reproducibility
+
+The Phase 3E benchmark uses:
+
+- seed `20270916`
+- deterministic synthetic data
+- fixed SQLite settings
+- rotated strategy order
+- five measured repetitions
+- two query warm-ups
+- 30 timed samples per query
+
+The 1m correctness-only `repetition == 0` run is preserved for correctness evidence but excluded from performance aggregation.
+
+## Scope and limitations
+
+This repository is a controlled systems benchmark, not a production trading system or a market-analysis project.
+
+Current limitations:
+
+- single-machine evidence
+- synthetic data
+- single-process execution
+- single-writer SQLite baseline
+- no distributed-system evaluation
+- no concurrent-writer benchmark
+- no universal performance ranking claim
+- no publication or research-novelty claim
+
+## Phase 3E repository state
+
+- Phase 3E implementation commit: `bcfe625`
+- Merge commit on `main`: `69313bd`
+- Corrected execution report commit: `ca3a3c1`
+- Pull request: `#2`
+
+The canonical source is the merged Git repository.

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650">
+<rect width="100%" height="100%" fill="white"/>
+<text x="600.0" y="40" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">Median storage footprint (bytes)</text>
+<line x1="110" y1="1015.0" x2="1040" y2="1015.0" stroke="#ddd"/>
+<text x="102" y="1019.0" text-anchor="end" font-family="sans-serif" font-size="12">0</text>
+<line x1="110" y1="829.0" x2="1040" y2="829.0" stroke="#ddd"/>
+<text x="102" y="833.0" text-anchor="end" font-family="sans-serif" font-size="12">60571976</text>
+<line x1="110" y1="643.0" x2="1040" y2="643.0" stroke="#ddd"/>
+<text x="102" y="647.0" text-anchor="end" font-family="sans-serif" font-size="12">121143951</text>
+<line x1="110" y1="457.0" x2="1040" y2="457.0" stroke="#ddd"/>
+<text x="102" y="461.0" text-anchor="end" font-family="sans-serif" font-size="12">181715927</text>
+<line x1="110" y1="271.0" x2="1040" y2="271.0" stroke="#ddd"/>
+<text x="102" y="275.0" text-anchor="end" font-family="sans-serif" font-size="12">242287903</text>
+<line x1="110" y1="85.0" x2="1040" y2="85.0" stroke="#ddd"/>
+<text x="102" y="89.0" text-anchor="end" font-family="sans-serif" font-size="12">302859878</text>
+<text x="342.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">exact_rerun</text>
+<rect x="168.125" y="206.30434782608688" width="90.675" height="808.6956521739131" fill="#4c78a8"><title>exact_rerun A_atomic_full_replace: 263356416.0</title></rect>
+<rect x="284.375" y="484.14569031273834" width="90.675" height="530.8543096872617" fill="#f58518"><title>exact_rerun B_incremental_upsert: 172875776.0</title></rect>
+<rect x="400.625" y="440.2746806887709" width="90.675" height="574.7253193112291" fill="#54a24b"><title>exact_rerun C_append_history_materialized: 187162624.0</title></rect>
+<text x="807.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">initial_load</text>
+<rect x="633.125" y="488.0196212084327" width="90.675" height="526.9803787915673" fill="#4c78a8"><title>initial_load A_atomic_full_replace: 171614208.0</title></rect>
+<rect x="749.375" y="484.14569031273834" width="90.675" height="530.8543096872617" fill="#f58518"><title>initial_load B_incremental_upsert: 172875776.0</title></rect>
+<rect x="865.625" y="440.2746806887709" width="90.675" height="574.7253193112291" fill="#54a24b"><title>initial_load C_append_history_materialized: 187162624.0</title></rect>
+<rect x="680" y="595" width="14" height="14" fill="#4c78a8"/>
+<text x="700" y="607" font-family="sans-serif" font-size="11">A_atomic_full_</text>
+<rect x="800" y="595" width="14" height="14" fill="#f58518"/>
+<text x="820" y="607" font-family="sans-serif" font-size="11">B_incremental_</text>
+<rect x="920" y="595" width="14" height="14" fill="#54a24b"/>
+<text x="940" y="607" font-family="sans-serif" font-size="11">C_append_histo</text>
+</svg>
