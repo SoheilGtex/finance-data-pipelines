@@ -2,11 +2,12 @@
 
 Finance Data Pipelines is a small, correctness-first time-series ETL and SQLite loading
 project. The current release provides a deterministic offline generator, strict validation,
-an independent logical-state oracle, and **Strategy A: atomic full replacement**.
+an independent logical-state oracle, and three comparable SQLite strategies: **A: atomic
+full replacement**, **B: incremental upsert**, and **C: append-only history with a current
+projection**.
 
-The repository is a baseline for a later controlled systems study. It does not yet contain
-Strategies B/C or performance results, and it is not presented as production-ready,
-high-performance, scalable, or research-grade software.
+The repository includes a reproducible benchmark harness. Its results are cohort-specific and
+are not a claim of production readiness, universal performance, scalability, or research novelty.
 
 ## Requirements
 
@@ -58,7 +59,26 @@ verified. It prints correctness fields as JSON and writes:
   warehouse.db
 ```
 
-No throughput, latency, or comparative benchmark conclusion is produced.
+The quickstart produces correctness evidence only. Comparative results are generated separately
+by the controlled experiment harness described below.
+
+## Controlled experiment
+
+The benchmark harness is `scripts/benchmark.py`. It freezes SQLite WAL and
+`synchronous=FULL`, runs stateful workload sequences from one fresh database per strategy and
+repetition, rotates strategy order, validates every transition against the independent oracle,
+and writes `environment.json`, `dataset_manifest.json`, `runs.jsonl`, `query_samples.jsonl`,
+`summary.csv`, `correctness.csv`, and `recovery.csv`. Each accepted condition uses five fixed
+queries with two warm-ups and 30 timed warm-cache samples. Analysis is regenerated from raw files
+with `scripts/analyze_benchmark.py`. A small offline smoke is reproducible with:
+
+```bash
+make benchmark-small
+```
+
+The full experiment is intentionally separate from ordinary CI. It uses synthetic data only;
+no financial or market conclusion is supported. Any report must identify the exact machine,
+source hash, workload definitions, and limitations of its cohort.
 
 ## Optional configuration file
 
@@ -80,7 +100,8 @@ Prices and optional volume use fixed-point integers with scale `10^-6`.
 Duplicate/update rules:
 
 - an exact duplicate event is a safe no-op;
-- different payloads for the same key and revision reject the entire snapshot;
+- different payloads for the same key and revision reject the entire batch, including across
+  previously committed batches;
 - the highest revision is current;
 - a lower revision cannot regress the current state;
 - an empty replacement is rejected by default.
@@ -120,13 +141,13 @@ only when build and run commands have actually executed in that release environm
 
 ## Current maturity and limitations
 
-- Strategy A only; Strategies B/C belong to the next phase.
+- Three strategies with shared logical semantics; physical storage trade-offs differ.
 - Single-process, single-writer SQLite baseline.
 - Synthetic correctness fixture only; no market-behavior claims.
 - No concurrency or distributed-system evaluation.
-- No performance measurements or rankings.
-- Deterministic exception injection tests transaction rollback; they are not a claim that
-  every OS/power-loss mode has been tested.
+- Benchmark results are machine-specific and do not establish universal rankings.
+- Deterministic exception injection and process-interruption tests cover transactional recovery;
+  they are not a claim that every OS/power-loss mode has been tested.
 
 ## Project layout
 
@@ -142,6 +163,8 @@ src/fdp/
   encoding.py     canonical binary checksum encoding
   manifest.py     deterministic JSON manifests
   parquet_io.py   frozen Parquet schema
+  strategies.py   alternative SQLite implementations with shared logical semantics
+scripts/          benchmark.py and analyze_benchmark.py
 tests/            isolated correctness and CLI tests
 .github/workflows/ci.yml
 ```
