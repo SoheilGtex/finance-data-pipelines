@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650">
+<rect width="100%" height="100%" fill="white"/>
+<text x="600.0" y="40" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">Median ingestion wall time (ms)</text>
+<line x1="110" y1="1015.0" x2="1040" y2="1015.0" stroke="#ddd"/>
+<text x="102" y="1019.0" text-anchor="end" font-family="sans-serif" font-size="12">0</text>
+<line x1="110" y1="829.0" x2="1040" y2="829.0" stroke="#ddd"/>
+<text x="102" y="833.0" text-anchor="end" font-family="sans-serif" font-size="12">1069</text>
+<line x1="110" y1="643.0" x2="1040" y2="643.0" stroke="#ddd"/>
+<text x="102" y="647.0" text-anchor="end" font-family="sans-serif" font-size="12">2138</text>
+<line x1="110" y1="457.0" x2="1040" y2="457.0" stroke="#ddd"/>
+<text x="102" y="461.0" text-anchor="end" font-family="sans-serif" font-size="12">3207</text>
+<line x1="110" y1="271.0" x2="1040" y2="271.0" stroke="#ddd"/>
+<text x="102" y="275.0" text-anchor="end" font-family="sans-serif" font-size="12">4276</text>
+<line x1="110" y1="85.0" x2="1040" y2="85.0" stroke="#ddd"/>
+<text x="102" y="89.0" text-anchor="end" font-family="sans-serif" font-size="12">5345</text>
+<text x="187.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">conflicting_same_revision</text>
+<rect x="129.375" y="1014.9257270113275" width="30.225" height="0.07427298867249782" fill="#4c78a8"><title>conflicting_same_revision A_atomic_full_replace: 0.426905</title></rect>
+<rect x="168.125" y="1014.923935363918" width="30.225" height="0.0760646360819903" fill="#f58518"><title>conflicting_same_revision B_incremental_upsert: 0.437203</title></rect>
+<rect x="206.875" y="1014.9242928930913" width="30.225" height="0.07570710690870354" fill="#54a24b"><title>conflicting_same_revision C_append_history_materialized: 0.435148</title></rect>
+<text x="342.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">duplicate_heavy_25pct</text>
+<rect x="284.375" y="227.59284309560394" width="30.225" height="787.4071569043961" fill="#4c78a8"><title>duplicate_heavy_25pct A_atomic_full_replace: 4525.845241</title></rect>
+<rect x="323.125" y="693.7210657301193" width="30.225" height="321.2789342698806" fill="#f58518"><title>duplicate_heavy_25pct B_incremental_upsert: 1846.641503</title></rect>
+<rect x="361.875" y="647.6708974436912" width="30.225" height="367.32910255630884" fill="#54a24b"><title>duplicate_heavy_25pct C_append_history_materialized: 2111.327864</title></rect>
+<text x="497.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">exact_rerun</text>
+<rect x="439.375" y="206.30434782608688" width="30.225" height="808.6956521739131" fill="#4c78a8"><title>exact_rerun A_atomic_full_replace: 4648.206886</title></rect>
+<rect x="478.125" y="735.5877138280648" width="30.225" height="279.41228617193514" fill="#f58518"><title>exact_rerun B_incremental_upsert: 1606.001107</title></rect>
+<rect x="516.875" y="718.9639951097515" width="30.225" height="296.03600489024853" fill="#54a24b"><title>exact_rerun C_append_history_materialized: 1701.55063</title></rect>
+<text x="652.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">initial_load</text>
+<rect x="594.375" y="418.37794156137454" width="30.225" height="596.6220584386255" fill="#4c78a8"><title>initial_load A_atomic_full_replace: 3429.253951</title></rect>
+<rect x="633.125" y="713.3907036990207" width="30.225" height="301.6092963009793" fill="#f58518"><title>initial_load B_incremental_upsert: 1733.584698</title></rect>
+<rect x="671.875" y="689.9123055333141" width="30.225" height="325.0876944666859" fill="#54a24b"><title>initial_load C_append_history_materialized: 1868.533429</title></rect>
+<text x="807.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">mixed_updates_50pct</text>
+<rect x="749.375" y="244.91998941462055" width="30.225" height="770.0800105853795" fill="#4c78a8"><title>mixed_updates_50pct A_atomic_full_replace: 4426.252569</title></rect>
+<rect x="788.125" y="702.1801506444019" width="30.225" height="312.81984935559814" fill="#f58518"><title>mixed_updates_50pct B_incremental_upsert: 1798.020521</title></rect>
+<rect x="826.875" y="671.362388912001" width="30.225" height="343.6376110879989" fill="#54a24b"><title>mixed_updates_50pct C_append_history_materialized: 1975.154319</title></rect>
+<text x="962.5" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">stale_revisions</text>
+<rect x="904.375" y="569.3362828914435" width="30.225" height="445.66371710855645" fill="#4c78a8"><title>stale_revisions A_atomic_full_replace: 2561.578207</title></rect>
+<rect x="943.125" y="899.2122764981308" width="30.225" height="115.78772350186917" fill="#f58518"><title>stale_revisions B_incremental_upsert: 665.522675</title></rect>
+<rect x="981.875" y="878.4791764413246" width="30.225" height="136.52082355867543" fill="#54a24b"><title>stale_revisions C_append_history_materialized: 784.692029</title></rect>
+<rect x="680" y="595" width="14" height="14" fill="#4c78a8"/>
+<text x="700" y="607" font-family="sans-serif" font-size="11">A_atomic_full_</text>
+<rect x="800" y="595" width="14" height="14" fill="#f58518"/>
+<text x="820" y="607" font-family="sans-serif" font-size="11">B_incremental_</text>
+<rect x="920" y="595" width="14" height="14" fill="#54a24b"/>
+<text x="940" y="607" font-family="sans-serif" font-size="11">C_append_histo</text>
+</svg>

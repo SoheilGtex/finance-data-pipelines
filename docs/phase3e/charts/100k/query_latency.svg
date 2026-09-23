@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650">
+<rect width="100%" height="100%" fill="white"/>
+<text x="600.0" y="40" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="bold">Median warm-cache query latency (ms)</text>
+<line x1="110" y1="1015.0" x2="1040" y2="1015.0" stroke="#ddd"/>
+<text x="102" y="1019.0" text-anchor="end" font-family="sans-serif" font-size="12">0</text>
+<line x1="110" y1="829.0" x2="1040" y2="829.0" stroke="#ddd"/>
+<text x="102" y="833.0" text-anchor="end" font-family="sans-serif" font-size="12">8</text>
+<line x1="110" y1="643.0" x2="1040" y2="643.0" stroke="#ddd"/>
+<text x="102" y="647.0" text-anchor="end" font-family="sans-serif" font-size="12">16</text>
+<line x1="110" y1="457.0" x2="1040" y2="457.0" stroke="#ddd"/>
+<text x="102" y="461.0" text-anchor="end" font-family="sans-serif" font-size="12">24</text>
+<line x1="110" y1="271.0" x2="1040" y2="271.0" stroke="#ddd"/>
+<text x="102" y="275.0" text-anchor="end" font-family="sans-serif" font-size="12">32</text>
+<line x1="110" y1="85.0" x2="1040" y2="85.0" stroke="#ddd"/>
+<text x="102" y="89.0" text-anchor="end" font-family="sans-serif" font-size="12">40</text>
+<text x="203.0" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">Q1_point</text>
+<rect x="133.25" y="1014.8936145586576" width="36.27" height="0.1063854413423906" fill="#4c78a8"><title>Q1_point A_atomic_full_replace: 0.004607</title></rect>
+<rect x="179.75" y="1014.9008308491763" width="36.27" height="0.09916915082372399" fill="#f58518"><title>Q1_point B_incremental_upsert: 0.0042945</title></rect>
+<rect x="226.25" y="1014.8993067686188" width="36.27" height="0.10069323138126637" fill="#54a24b"><title>Q1_point C_append_history_materialized: 0.0043605</title></rect>
+<text x="389.0" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">Q2_range</text>
+<rect x="319.25" y="253.10901184705642" width="36.27" height="761.8909881529436" fill="#4c78a8"><title>Q2_range A_atomic_full_replace: 32.993535</title></rect>
+<rect x="365.75" y="257.3874408079579" width="36.27" height="757.6125591920421" fill="#f58518"><title>Q2_range B_incremental_upsert: 32.8082585</title></rect>
+<rect x="412.25" y="266.72442014605576" width="36.27" height="748.2755798539442" fill="#54a24b"><title>Q2_range C_append_history_materialized: 32.4039225</title></rect>
+<text x="575.0" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">Q3_period_aggregate</text>
+<rect x="505.25" y="213.72202480751616" width="36.27" height="801.2779751924838" fill="#4c78a8"><title>Q3_period_aggregate A_atomic_full_replace: 34.6991805</title></rect>
+<rect x="551.75" y="213.74875394759715" width="36.27" height="801.2512460524028" fill="#f58518"><title>Q3_period_aggregate B_incremental_upsert: 34.698023</title></rect>
+<rect x="598.25" y="206.304347826087" width="36.27" height="808.695652173913" fill="#54a24b"><title>Q3_period_aggregate C_append_history_materialized: 35.0204015</title></rect>
+<text x="761.0" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">Q4_latest</text>
+<rect x="691.25" y="1014.8993760450077" width="36.27" height="0.10062395499228718" fill="#4c78a8"><title>Q4_latest A_atomic_full_replace: 0.0043575</title></rect>
+<rect x="737.75" y="1014.9006576582038" width="36.27" height="0.09934234179617199" fill="#f58518"><title>Q4_latest B_incremental_upsert: 0.004302</title></rect>
+<rect x="784.25" y="1014.9015697973254" width="36.27" height="0.09843020267461254" fill="#54a24b"><title>Q4_latest C_append_history_materialized: 0.004262500000000001</title></rect>
+<text x="947.0" y="1045" text-anchor="middle" font-family="sans-serif" font-size="12">Q5_filtered_return</text>
+<rect x="877.25" y="1010.5665420266279" width="36.27" height="4.433457973372167" fill="#4c78a8"><title>Q5_filtered_return A_atomic_full_replace: 0.19199</title></rect>
+<rect x="923.75" y="1010.7564747930792" width="36.27" height="4.243525206920862" fill="#f58518"><title>Q5_filtered_return B_incremental_upsert: 0.183765</title></rect>
+<rect x="970.25" y="1010.7622247333644" width="36.27" height="4.237775266635588" fill="#54a24b"><title>Q5_filtered_return C_append_history_materialized: 0.183516</title></rect>
+<rect x="680" y="595" width="14" height="14" fill="#4c78a8"/>
+<text x="700" y="607" font-family="sans-serif" font-size="11">A_atomic_full_</text>
+<rect x="800" y="595" width="14" height="14" fill="#f58518"/>
+<text x="820" y="607" font-family="sans-serif" font-size="11">B_incremental_</text>
+<rect x="920" y="595" width="14" height="14" fill="#54a24b"/>
+<text x="940" y="607" font-family="sans-serif" font-size="11">C_append_histo</text>
+</svg>
