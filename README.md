@@ -4,6 +4,14 @@
 
 A correctness-first, reproducible time-series ETL and SQLite benchmark for comparing three loading strategies under stateful updates, duplicates, conflicts, stale revisions, and interruption recovery.
 
+## Open-Source Recognition
+
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/SoheilGtex/badge.svg)](https://hub.xerj.org/contributors/SoheilGtex)
+
+The **Phase 3E benchmark study** was selected for the XERJ Corpus Hub in October 2026.
+
+Selected commit: [bcfe625](https://github.com/SoheilGtex/finance-data-pipelines/commit/bcfe625b1ee325df432ec325b50d60a4526850b4).
+
 ## Why this project exists
 
 The project studies a practical systems question:
